@@ -96,15 +96,79 @@ async function loadOnlineLeaderboard(){
  try{const response=await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score&order=score.desc&limit=10`, {headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});if(!response.ok)throw new Error(`HTTP ${response.status}`);showLeaderboardRows(await response.json());leaderboardStatus.textContent='🌐 Live online leaderboard';}
  catch(error){leaderboardStatus.textContent='Could not load scores. Check Supabase setup.';}
 }
-async function submitOnlineScore(score){
- if(!leaderboardConfigured()){leaderboardStatus.textContent='Online setup needed — see README.';return;}
- const name=safeName(playerNameEl.value);if(!name){leaderboardStatus.textContent='Enter a player name first.';playerNameEl.focus();return;}
- if(!Number.isFinite(score)||score<1){leaderboardStatus.textContent='Run at least 1 metre to submit a score.';return;}
- localStorage.setItem('tkd_player_name',name);leaderboardStatus.textContent='Submitting score…';submitScoreBtn.disabled=true;
- try{const response=await fetch(`${SUPABASE_URL}/rest/v1/scores`,{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({player_name:name,score:Math.floor(score)})});if(!response.ok)throw new Error(`HTTP ${response.status}`);leaderboardStatus.textContent='Score submitted! 🏆';await loadOnlineLeaderboard();}
- catch(error){leaderboardStatus.textContent='Submit failed. Check setup and table policies.';}
- finally{submitScoreBtn.disabled=false;}
+
+async function submitOnlineScore(score) {
+  if (!leaderboardConfigured()) {
+    leaderboardStatus.textContent = 'Online setup needed — see README.';
+    return;
+  }
+
+  const name = safeName(playerNameEl.value);
+  if (!name) {
+    leaderboardStatus.textContent = 'Enter a player name first.';
+    return;
+  }
+
+  if (!Number.isFinite(score) || score < 1) {
+    leaderboardStatus.textContent = 'Run at least 1 metre to submit a score.';
+    return;
+  }
+
+  localStorage.setItem('tkd_player_name', name);
+  leaderboardStatus.textContent = 'Submitting score...';
+  submitScoreBtn.disabled = true;
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/validate-score`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+          player_name: name,
+          score: Math.floor(score)
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Score submission failed');
+    }
+
+    leaderboardStatus.textContent = 'Score submitted successfully!';
+    await loadOnlineLeaderboard();
+  } catch (error) {
+    console.error(error);
+    leaderboardStatus.textContent = 'Submit failed. Please try again.';
+  } finally {
+    submitScoreBtn.disabled = false;
+  }
 }
+
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Score submission failed');
+    }
+
+    leaderboardStatus.textContent = 'Score submitted successfully!';
+    await loadOnlineLeaderboard();
+  } catch (error) {
+    console.error(error);
+    leaderboardStatus.textContent = 'Submit failed. Please try again.';
+  } finally {
+    submitScoreBtn.disabled = false;
+  }
+}
+
 playerNameEl.value=localStorage.getItem('tkd_player_name')||'';
 refreshBoardBtn.addEventListener('click',loadOnlineLeaderboard);
 submitScoreBtn.addEventListener('click',()=>submitOnlineScore(Math.max(lastRunScore,best)));
