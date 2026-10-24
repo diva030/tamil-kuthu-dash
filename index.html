@@ -119,6 +119,8 @@ async function submitOnlineScore(score) {
   submitScoreBtn.disabled = true;
 
   try {
+   console.log("SCORE BEING SUBMITTED:", score);
+   
     const response = await fetch(
       `${SUPABASE_URL}/functions/v1/validate-score`,
       {
