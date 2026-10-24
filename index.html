@@ -151,24 +151,6 @@ async function submitOnlineScore(score) {
   }
 }
 
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Score submission failed');
-    }
-
-    leaderboardStatus.textContent = 'Score submitted successfully!';
-    await loadOnlineLeaderboard();
-  } catch (error) {
-    console.error(error);
-    leaderboardStatus.textContent = 'Submit failed. Please try again.';
-  } finally {
-    submitScoreBtn.disabled = false;
-  }
-}
-
 playerNameEl.value=localStorage.getItem('tkd_player_name')||'';
 refreshBoardBtn.addEventListener('click',loadOnlineLeaderboard);
 submitScoreBtn.addEventListener('click',()=>submitOnlineScore(Math.max(lastRunScore,best)));
