@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#17112f">
+<title>Tamil Kuthu Dash v0.8 - Online Leaderboard</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17112f;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+body{display:grid;place-items:center}#wrap{position:relative;width:min(100vw,56.25vh);height:min(100vh,177.78vw);max-width:100vw;max-height:100vh;overflow:hidden;background:#21184a}
+canvas{display:block;width:100%;height:100%}.hud{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;justify-content:space-between;pointer-events:none}
+.pill{background:#17112fe8;border:1px solid #ffffff38;border-radius:13px;padding:7px 9px;font-size:clamp(10px,2.7vw,14px);font-weight:900;box-shadow:0 4px 15px #0003}
+#powerStatus{position:absolute;top:55px;left:10px;background:#17112fdc;border:1px solid #ffffff30;border-radius:10px;padding:5px 9px;font-size:11px;font-weight:800;pointer-events:none}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(#17112f55,#17112fcf)}
+.panel{width:100%;max-width:370px;max-height:calc(100% - 8px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;text-align:center;border:1px solid #ffffff40;background:#201744f2;border-radius:26px;padding:25px 20px;box-shadow:0 18px 60px #0008}
+.logo{font-size:clamp(32px,8vw,48px);font-weight:1000;line-height:.95;letter-spacing:-1.5px;color:#ffd34e;text-shadow:0 4px 0 #a53c65,0 8px 24px #ff4d9d55}
+.logo span{display:block;color:white;font-size:.55em;letter-spacing:4px;margin-top:10px}.tag{color:#d4cbff;font-size:13px;margin:17px 0 20px}
+button{border:0;border-radius:15px;padding:13px 19px;font-weight:950;font-size:15px;color:#211336;background:linear-gradient(135deg,#ffe36a,#ff9d48);box-shadow:0 5px 0 #b75a38;cursor:pointer;touch-action:manipulation}
+button:active{transform:translateY(3px);box-shadow:0 2px 0 #b75a38}.hint{font-size:11px;color:#c7c0e6;line-height:1.7;margin-top:16px}
+#characterSelect{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 16px}
+.skinBtn{padding:9px 10px;font-size:11px;border-radius:11px;background:#39295f;color:#fff;border:1px solid #ffffff40;box-shadow:none}
+.skinBtn.active{background:linear-gradient(135deg,#ffe36a,#ff9d48);color:#211336;border-color:#fff0a8}
+#difficultySelect{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 16px}
+.diffBtn{padding:9px 12px;font-size:11px;border-radius:11px;background:#39295f;color:#fff;border:1px solid #ffffff40;box-shadow:none}
+.diffBtn.active{background:linear-gradient(135deg,#54f1e8,#8dffb0);color:#17112f;border-color:#d8fff9}
+.diffNote{font-size:11px;color:#d4cbff;margin:-8px 0 15px;line-height:1.45}
+#shopBox{margin:0 auto 13px;padding:10px;border-radius:14px;background:#17112f88;border:1px solid #ffffff2b;max-width:310px}
+#walletLine{font-size:12px;font-weight:900;color:#ffe36a;margin-bottom:7px}
+#shopBuy{padding:9px 12px;font-size:11px;border-radius:11px}
+#shopMsg{font-size:10px;color:#d4cbff;margin-top:5px;min-height:14px}
+#touchControls{position:absolute;bottom:15px;left:13px;right:13px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+.touchbtn{pointer-events:auto;background:#17112fae;color:#fff;border:1px solid #ffffff60;box-shadow:none;border-radius:50%;width:61px;height:61px;padding:0;font-size:11px;backdrop-filter:blur(5px)}
+#pause{position:absolute;right:12px;top:58px;padding:7px 10px;font-size:12px;background:#17112fce;color:#fff;border:1px solid #ffffff44;box-shadow:none}
+#musicToggle{position:absolute;right:12px;top:100px;padding:7px 10px;font-size:12px;background:#17112fce;color:#fff;border:1px solid #ffffff44;box-shadow:none}
+#onlineBoard{margin:0 auto 12px;padding:9px 10px;border-radius:14px;background:#17112f99;border:1px solid #ffffff30;max-width:320px;text-align:left}
+#onlineBoard .boardTitle{text-align:center;font-size:11px;font-weight:1000;color:#ffe36a;margin-bottom:6px}
+#playerName{width:100%;border:1px solid #ffffff45;border-radius:9px;padding:8px;background:#17112f;color:white;font-weight:800;font-size:12px;outline:none;margin-bottom:6px;touch-action:manipulation}
+.boardActions{display:flex;gap:6px}.boardActions button{flex:1;padding:8px 6px;font-size:10px;border-radius:9px;box-shadow:none}
+#leaderboardStatus{font-size:10px;color:#d4cbff;text-align:center;min-height:14px;margin:5px 0}
+#leaderboardList{font-size:10px;line-height:1.7;color:#fff;max-height:78px;overflow:auto}
+#leaderboardList .rankRow{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #ffffff18;padding:2px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="game" aria-label="Tamil Kuthu Dash game"></canvas>
+<div class="hud"><div class="pill">🪙 <span id="coins">0</span></div><div class="pill">DIST <span id="distance">0</span> m</div><div class="pill">BEST <span id="best">0</span></div></div>
+<div id="powerStatus">✨ Power-ups: none</div>
+<button id="pause" class="hidden">Ⅱ PAUSE</button>
+<button id="musicToggle" class="hidden">♫ MUSIC: OFF</button>
+<div id="overlay"><div class="panel">
+<div class="logo">TAMIL<span>KUTHU DASH</span></div>
+<div class="tag" id="subtitle">Run to the beat. Grab the gold. Celebrate!</div>
+<div style="font-size:12px;font-weight:900;margin-bottom:8px">CHOOSE YOUR HERO</div>
+<div id="characterSelect"><button class="skinBtn active" data-skin="veshti">🤍 VESHTI</button><button class="skinBtn" data-skin="black">🖤 STREET</button><button class="skinBtn" data-skin="festival">❤️ FESTIVAL</button><button class="skinBtn" data-skin="royal" id="royalSkinBtn">👑 ROYAL 🔒</button></div>
+<div id="shopBox"><div id="walletLine">🪙 COIN WALLET: <span id="wallet">0</span></div><button id="shopBuy">👑 UNLOCK ROYAL LOOK · 150 COINS</button><div id="shopMsg">Collect coins during runs to unlock the Royal hero look.</div></div>
+<div style="font-size:12px;font-weight:900;margin-bottom:8px">CHOOSE DIFFICULTY</div>
+<div id="difficultySelect"><button class="diffBtn" data-difficulty="easy">🟢 EASY</button><button class="diffBtn active" data-difficulty="medium">🟡 MEDIUM</button><button class="diffBtn" data-difficulty="hard">🔴 HARD</button></div>
+<div id="difficultyNote" class="diffNote">Balanced speed and obstacle spacing.</div>
+<div style="font-size:12px;font-weight:900;margin:8px 0 7px">CHOOSE YOUR WORLD</div>
+<div id="backgroundSelect"><button class="bgBtn" data-background="village">🌴 VILLAGE</button><button class="bgBtn" data-background="temple">🛕 TEMPLE</button><button class="bgBtn active" data-background="festival">🪔 DEEPAVALI</button></div>
+<div id="backgroundNote">Choose a starting world — scenery changes during your run!</div>
+<div id="onlineBoard">
+<div class="boardTitle">🌐 ONLINE LEADERBOARD</div>
+<input id="playerName" maxlength="18" placeholder="Your player name" autocomplete="nickname" value="" />
+<div class="boardActions"><button id="submitScore" type="button">⬆ SUBMIT BEST</button><button id="refreshBoard" type="button">↻ REFRESH</button></div>
+<div id="leaderboardStatus">Online setup needed — see README.</div>
+<div id="leaderboardList">Top players will appear here.</div>
+</div>
+<button id="start">LET'S DANCE! ▶</button>
+<div class="hint">SPACE / ↑ = JUMP · HOLD ↓ = DUCK<br>Release ↓ to stand up • Jump barriers and drums<br>🧲 Magnet attracts coins · 🛡 Shield protects you<br>♫ Kuthu-inspired beat starts automatically (tap MUSIC to mute)</div>
+</div></div>
+<div id="touchControls" class="hidden"><button class="touchbtn" id="jump">JUMP<br>⬆</button><button class="touchbtn" id="duck">DUCK<br>⬇</button></div>
+</div>
+<script>
+(()=> {
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),wrap=document.querySelector('#wrap');
+const overlay=document.querySelector('#overlay'),startBtn=document.querySelector('#start'),subtitle=document.querySelector('#subtitle');
+const coinsEl=document.querySelector('#coins'),distEl=document.querySelector('#distance'),bestEl=document.querySelector('#best'),powerStatus=document.querySelector('#powerStatus');
+// Configure these two values after creating your Supabase project. The anon/publishable key is designed for browser use with RLS enabled.
+const SUPABASE_URL='YOUR_SUPABASE_PROJECT_URL';
+const SUPABASE_ANON_KEY='YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY';
+const playerNameEl=document.querySelector('#playerName'),submitScoreBtn=document.querySelector('#submitScore'),refreshBoardBtn=document.querySelector('#refreshBoard'),leaderboardStatus=document.querySelector('#leaderboardStatus'),leaderboardList=document.querySelector('#leaderboardList');
+let lastRunScore=0;
+function leaderboardConfigured(){return /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co$/.test(SUPABASE_URL)&&!SUPABASE_ANON_KEY.startsWith('YOUR_')&&SUPABASE_ANON_KEY.length>20;}
+function safeName(value){return String(value||'').trim().replace(/[<>\u0000-\u001f]/g,'').slice(0,18);}
+function showLeaderboardRows(rows){
+ if(!rows||!rows.length){leaderboardList.textContent='No scores yet — be the first!';return;}
+ leaderboardList.innerHTML='';
+ rows.forEach((row,index)=>{const line=document.createElement('div');line.className='rankRow';const left=document.createElement('span');left.textContent=`${['🥇','🥈','🥉'][index]||`${index+1}.`} ${safeName(row.player_name)||'Player'}`;const right=document.createElement('strong');right.textContent=`${Number(row.score)||0} m`;line.append(left,right);leaderboardList.appendChild(line);});
+}
+async function loadOnlineLeaderboard(){
+ if(!leaderboardConfigured()){leaderboardStatus.textContent='Setup needed: connect a Supabase project (README).';return;}
+ leaderboardStatus.textContent='Loading online scores…';
+ try{const response=await fetch(`${SUPABASE_URL}/rest/v1/scores?select=player_name,score&order=score.desc&limit=10`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});if(!response.ok)throw new Error(`HTTP ${response.status}`);showLeaderboardRows(await response.json());leaderboardStatus.textContent='🌐 Live online leaderboard';}
+ catch(error){leaderboardStatus.textContent='Could not load scores. Check Supabase setup.';}
+}
+async function submitOnlineScore(score){
+ if(!leaderboardConfigured()){leaderboardStatus.textContent='Online setup needed — see README.';return;}
+ const name=safeName(playerNameEl.value);if(!name){leaderboardStatus.textContent='Enter a player name first.';playerNameEl.focus();return;}
+ if(!Number.isFinite(score)||score<1){leaderboardStatus.textContent='Run at least 1 metre to submit a score.';return;}
+ localStorage.setItem('tkd_player_name',name);leaderboardStatus.textContent='Submitting score…';submitScoreBtn.disabled=true;
+ try{const response=await fetch(`${SUPABASE_URL}/rest/v1/scores`,{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({player_name:name,score:Math.floor(score)})});if(!response.ok)throw new Error(`HTTP ${response.status}`);leaderboardStatus.textContent='Score submitted! 🏆';await loadOnlineLeaderboard();}
+ catch(error){leaderboardStatus.textContent='Submit failed. Check setup and table policies.';}
+ finally{submitScoreBtn.disabled=false;}
+}
+playerNameEl.value=localStorage.getItem('tkd_player_name')||'';
+refreshBoardBtn.addEventListener('click',loadOnlineLeaderboard);
+submitScoreBtn.addEventListener('click',()=>submitOnlineScore(Math.max(lastRunScore,best)));
+
+const controls=document.querySelector('#touchControls'),pauseBtn=document.querySelector('#pause'),musicBtn=document.querySelector('#musicToggle');
+let W=450,H=800,dpr=1,state='menu',last=0,time=0,distance=0,coins=0,speed=290,obstacles=[],pickups=[],powerups=[],particles=[],spawn=0,coinSpawn=0,powerSpawn=7,difficulty=localStorage.getItem('tkd_difficulty')||'medium',selectedBackground=localStorage.getItem('tkd_background')||'festival',activeBackground='festival',sceneCycleTimer=0;
+let soundOn=true,audioCtx=null,musicOn=false,musicTimer=null,musicStep=0,selectedSkin=localStorage.getItem('tkd_skin')||'veshti',wallet=Number(localStorage.getItem('tkd_wallet')||0),royalUnlocked=localStorage.getItem('tkd_royal_unlocked')==='yes',best=Number(localStorage.getItem('tkd_best_v03')||0);bestEl.textContent=best;
+const groundY=650;
+const player={x:95,y:groundY,w:46,h:68,vy:0,onGround:true,ducking:false,duckTime:0,run:0,shield:0,magnet:0,blink:0};
+function resize(){dpr=Math.min(devicePixelRatio||1,2);canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+window.addEventListener('resize',resize);resize();
+function beep(freq=440,dur=.08,type='triangle'){if(!soundOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(.055,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.start();o.stop(audioCtx.currentTime+dur)}catch(e){}}
+function musicNote(freq,duration,volume,type='triangle',when=0){
+ if(!audioCtx||!musicOn)return;
+ try{
+  const now=audioCtx.currentTime+when;
+  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(freq,now);
+  gain.gain.setValueAtTime(.0001,now);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.0005,volume*1.8),now+.008);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  osc.connect(gain);gain.connect(audioCtx.destination);
+  osc.start(now);osc.stop(now+duration+.02);
+ }catch(e){}
+}
+function drumHit(kind,when=0){
+ if(!audioCtx||!musicOn)return;
+ try{
+  const now=audioCtx.currentTime+when;
+  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+  if(kind==='kick'){
+   osc.type='sine';osc.frequency.setValueAtTime(125,now);osc.frequency.exponentialRampToValueAtTime(48,now+.13);
+   gain.gain.setValueAtTime(.34,now);gain.gain.exponentialRampToValueAtTime(.001,now+.16);
+  }else{
+   osc.type='triangle';osc.frequency.setValueAtTime(kind==='clap'?190:480,now);
+   gain.gain.setValueAtTime(kind==='clap'?.16:.085,now);gain.gain.exponentialRampToValueAtTime(.001,now+(kind==='clap'?.09:.045));
+  }
+  osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now);osc.stop(now+.18);
+ }catch(e){}
+}
+function playMusicStep(){
+ if(!musicOn||!audioCtx)return;
+ // Original synthesized kuthu-inspired groove: thump, clap, bright ticks and a bass hook.
+ const step=musicStep%16;
+ if(step===0||step===8)drumHit('kick');
+ if(step===4||step===12)drumHit('clap');
+ if(step%2===0)drumHit('hat');
+ const bass=[110,110,146.83,110,130.81,130.81,164.81,146.83,110,110,146.83,164.81,130.81,110,98,110];
+ if(step%2===0)musicNote(bass[step],.12,.055,'sawtooth');
+ if(step===3||step===7||step===11||step===15)musicNote([440,523.25,587.33,523.25][Math.floor(step/4)],.09,.04,'square');
+ musicStep++;
+}
+function startMusic(){
+ try{
+  audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  musicOn=true;musicStep=0;
+  if(musicTimer)clearInterval(musicTimer);
+  playMusicStep();
+  musicTimer=setInterval(playMusicStep,125);
+  musicBtn.textContent='♫ MUSIC: ON';
+ }catch(e){musicOn=false;musicBtn.textContent='♫ MUSIC: OFF'}
+}
+function stopMusic(){
+ musicOn=false;
+ if(musicTimer){clearInterval(musicTimer);musicTimer=null}
+ musicBtn.textContent='♫ MUSIC: OFF';
+}
+musicBtn.addEventListener('click',()=>{if(musicOn)stopMusic();else startMusic()});
+const skinButtons=[...document.querySelectorAll('.skinBtn')];
+const difficultyButtons=[...document.querySelectorAll('.diffBtn')];
+const difficultyNote=document.querySelector('#difficultyNote');
+const walletEl=document.querySelector('#wallet'),shopBuy=document.querySelector('#shopBuy'),shopMsg=document.querySelector('#shopMsg'),royalSkinBtn=document.querySelector('#royalSkinBtn');
+function refreshShop(){walletEl.textContent=wallet;royalSkinBtn.textContent=royalUnlocked?'👑 ROYAL':'👑 ROYAL 🔒';royalSkinBtn.style.opacity=royalUnlocked?'1':'.65';shopBuy.textContent=royalUnlocked?'✅ ROYAL LOOK UNLOCKED':'👑 UNLOCK ROYAL LOOK · 150 COINS';shopBuy.disabled=royalUnlocked;shopBuy.style.opacity=royalUnlocked?'.65':'1';shopMsg.textContent=royalUnlocked?'Royal look unlocked! Select it above to equip.':'Collect coins during runs to unlock the Royal hero look.';}
+const difficultySettings={
+ easy:{label:'Easy',startSpeed:245,maxSpeed:365,acceleration:2.1,spawnMin:1.35,spawnBase:2.0,spawnRandom:.45,spawnRamp:.0015,coinMin:1.8,coinRandom:.8,powerMin:8,powerRandom:4,note:'Relaxed pace, fewer obstacles, and more breathing room.'},
+ medium:{label:'Medium',startSpeed:290,maxSpeed:510,acceleration:4.1,spawnMin:.72,spawnBase:1.42,spawnRandom:.3,spawnRamp:.0035,coinMin:2.2,coinRandom:1.1,powerMin:10,powerRandom:7,note:'Balanced speed and obstacle spacing.'},
+ hard:{label:'Hard',startSpeed:340,maxSpeed:640,acceleration:6.0,spawnMin:.48,spawnBase:1.08,spawnRandom:.24,spawnRamp:.0055,coinMin:2.5,coinRandom:1.25,powerMin:12,powerRandom:8,note:'Fast runs, tighter obstacle gaps, and quicker difficulty ramp-up.'}
+};
+function chooseDifficulty(level){
+ difficulty=difficultySettings[level]?level:'medium';
+ localStorage.setItem('tkd_difficulty',difficulty);
+ difficultyButtons.forEach(btn=>btn.classList.toggle('active',btn.dataset.difficulty===difficulty));
+ difficultyNote.textContent=difficultySettings[difficulty].note;
+}
+difficultyButtons.forEach(btn=>btn.addEventListener('click',()=>chooseDifficulty(btn.dataset.difficulty)));
+chooseDifficulty(difficulty);
+function chooseSkin(skin){
+ if(skin==='royal'&&!royalUnlocked){shopMsg.textContent='Royal look is locked. Unlock it for 150 coins!';return;}
+ selectedSkin=skin;
+ localStorage.setItem('tkd_skin',skin);
+ skinButtons.forEach(btn=>btn.classList.toggle('active',btn.dataset.skin===skin));
+}
+skinButtons.forEach(btn=>btn.addEventListener('click',()=>chooseSkin(btn.dataset.skin)));
+chooseSkin(['veshti','black','festival','royal'].includes(selectedSkin)&& (selectedSkin!=='royal'||royalUnlocked)?selectedSkin:'veshti');
+shopBuy.addEventListener('click',()=>{if(royalUnlocked)return;if(wallet<150){shopMsg.textContent=`You need ${150-wallet} more coins. Keep running, bro!`;return;}wallet-=150;royalUnlocked=true;localStorage.setItem('tkd_wallet',wallet);localStorage.setItem('tkd_royal_unlocked','yes');refreshShop();chooseSkin('royal');shopMsg.textContent='Royal look unlocked! 👑';beep(880,.12)});
+refreshShop();
+
+const backgroundButtons=[...document.querySelectorAll('.bgBtn')];
+const backgroundNames={village:'Tamil Village',temple:'Temple Streets',festival:'Deepavali Festival'};
+function chooseBackground(name){if(!['village','temple','festival'].includes(name))name='festival';selectedBackground=name;activeBackground=name;localStorage.setItem('tkd_background',name);backgroundButtons.forEach(b=>b.classList.toggle('active',b.dataset.background===name));document.querySelector('#backgroundNote').textContent=`Starting world: ${backgroundNames[name]} · worlds rotate during runs!`;}
+backgroundButtons.forEach(b=>b.addEventListener('click',()=>chooseBackground(b.dataset.background)));
+chooseBackground(selectedBackground);
+loadOnlineLeaderboard();
+
+function reset(){const cfg=difficultySettings[difficulty];time=distance=coins=0;speed=cfg.startSpeed;obstacles=[];pickups=[];powerups=[];particles=[];spawn=.8;coinSpawn=.5;powerSpawn=cfg.powerMin;Object.assign(player,{y:groundY,vy:0,onGround:true,ducking:false,duckTime:0,run:0,shield:0,magnet:0,blink:0});coinsEl.textContent='0';distEl.textContent='0';powerStatus.textContent='✨ Power-ups: none'}
+function begin(){reset();activeBackground=selectedBackground;sceneCycleTimer=0;state='playing';overlay.classList.add('hidden');controls.classList.remove('hidden');pauseBtn.classList.remove('hidden');musicBtn.classList.remove('hidden');last=performance.now();beep(590);if(!musicOn)startMusic()}
+function finish(){if(state!=='playing')return;wallet+=coins;localStorage.setItem('tkd_wallet',wallet);refreshShop();state='over';controls.classList.add('hidden');pauseBtn.classList.add('hidden');musicBtn.classList.add('hidden');const score=Math.floor(distance);lastRunScore=Math.max(lastRunScore,score);if(score>best){best=score;localStorage.setItem('tkd_best_v03',best);bestEl.textContent=best}subtitle.textContent=`You ran ${score} m and collected ${coins} coins. Try again!`;startBtn.textContent='RUN IT BACK ↻';overlay.classList.remove('hidden');beep(135,.25,'sawtooth')}
+function togglePause(){if(state==='playing'){state='paused';pauseBtn.textContent='▶ RESUME';overlay.classList.remove('hidden');subtitle.textContent='Take a breather, superstar.';startBtn.textContent='RESUME RUN ▶'}else if(state==='paused')resume()}
+function resume(){state='playing';overlay.classList.add('hidden');pauseBtn.textContent='Ⅱ PAUSE';last=performance.now()}
+startBtn.addEventListener('click',()=>{if(state==='paused')resume();else begin()});pauseBtn.addEventListener('click',togglePause);
+function jump(){
+ if(state!=='playing')return;
+ if(player.onGround){
+  // Jumping cancels the crouch, so the player never needs a second tap.
+  player.ducking=false;
+  player.duckTime=0;
+  player.vy=-700;
+  player.onGround=false;
+  player.run+=1;
+  beep(530,.08);
+ }
+}
+function duck(){
+ if(state==='playing'&&player.onGround){
+  player.ducking=true;
+ }
+}
+function unduck(){
+ player.ducking=false;
+ player.duckTime=0;
+}
+
+window.addEventListener('keydown',e=>{
+ if(['Space','ArrowUp','KeyW','ArrowDown','KeyS'].includes(e.code))e.preventDefault();
+ if(state!=='playing'&&state!=='paused'&&['Space','ArrowUp','KeyW','Enter'].includes(e.code)){begin();return}
+ if(e.code==='Escape'||e.code==='KeyP'){togglePause();return}
+ if(['Space','ArrowUp','KeyW'].includes(e.code))jump();
+ if(['ArrowDown','KeyS'].includes(e.code))duck();
+});
+window.addEventListener('keyup',e=>{
+ if(['ArrowDown','KeyS'].includes(e.code))unduck();
+});
+window.addEventListener('blur',unduck);
+canvas.addEventListener('pointerdown',()=>{if(state==='playing')jump()});
+document.querySelector('#jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+const duckBtn=document.querySelector('#duck');
+duckBtn.addEventListener('pointerdown',e=>{e.preventDefault();duck();if(duckBtn.setPointerCapture)duckBtn.setPointerCapture(e.pointerId)});
+for(const ev of ['pointerup','pointercancel','lostpointercapture','pointerleave']){
+ duckBtn.addEventListener(ev,unduck);
+}
+function addObstacle(){
+ const roll=Math.random();
+ const kind=roll<0.45?'barrier':roll<0.70?'drum':'banner';
+ obstacles.push({
+  x:W+40,
+  y:groundY,
+  w:kind==='banner'?68:(kind==='drum'?43:46),
+  h:kind==='drum'?42:44,
+  kind
+ });
+}
+function addCoins(){const n=4+Math.floor(Math.random()*3),baseY=groundY-112-Math.random()*70;for(let i=0;i<n;i++)pickups.push({x:W+20+i*35,y:baseY+Math.sin(i*.8)*13,r:10,got:false})}
+function addPowerup(){const kind=Math.random()<.5?'magnet':'shield';powerups.push({x:W+30,y:groundY-120-Math.random()*60,r:17,kind,spin:0})}
+function burst(x,y,color,n=8){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=40+Math.random()*180;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.35+Math.random()*.35,color,size:2+Math.random()*4})}}
+function update(dt){
+ const cfg=difficultySettings[difficulty];
+ time+=dt;sceneCycleTimer+=dt;if(sceneCycleTimer>=16){sceneCycleTimer=0;const worlds=['village','temple','festival'];activeBackground=worlds[(worlds.indexOf(activeBackground)+1)%worlds.length]}distance+=speed*dt/10;speed=Math.min(cfg.maxSpeed,cfg.startSpeed+time*cfg.acceleration);player.run+=dt*speed/36;
+ player.shield=Math.max(0,player.shield-dt);player.magnet=Math.max(0,player.magnet-dt);player.blink=Math.max(0,player.blink-dt);
+ if(!player.onGround){player.vy+=1780*dt;player.y+=player.vy*dt;if(player.y>=groundY){player.y=groundY;player.vy=0;player.onGround=true;burst(player.x+20,groundY+1,'#ffd34e',4)}}
+ spawn-=dt;if(spawn<=0){addObstacle();spawn=Math.max(cfg.spawnMin,cfg.spawnBase-Math.random()*cfg.spawnRandom-time*cfg.spawnRamp)}
+ coinSpawn-=dt;if(coinSpawn<=0){addCoins();coinSpawn=cfg.coinMin+Math.random()*cfg.coinRandom}
+ powerSpawn-=dt;if(powerSpawn<=0){addPowerup();powerSpawn=cfg.powerMin+Math.random()*cfg.powerRandom}
+ for(const o of obstacles)o.x-=speed*dt;
+ for(const c of pickups)c.x-=speed*dt;
+ for(const p of powerups){p.x-=speed*dt;p.spin+=dt*4}
+ // Collision detection: jump ground obstacles and duck under hanging banners.
+ const px=player.x+4;
+ const pw=player.w-8;
+ const ph=player.ducking?35:player.h;
+ const pTop=player.y-ph;
+
+ for(const o of obstacles){
+  const ox=o.x+2;
+  const ow=o.w-4;
+  let oy,oh;
+
+  if(o.kind==='banner'){
+   oy=o.y-100;
+   oh=55;
+  }else if(o.kind==='barrier'){
+   oy=o.y-42;
+   oh=48;
+  }else{
+   oy=o.y-37;
+   oh=39;
+  }
+
+  const hitX=px<ox+ow && px+pw>ox;
+  const hitY=pTop<oy+oh && pTop+ph>oy;
+
+  if(hitX&&hitY){
+   if(player.shield>0){
+    player.shield=0;
+    o.x=-100;
+    burst(px+pw/2,player.y-30,'#55f4ed',18);
+    beep(300,.18,'square');
+   }else{
+    finish();
+    return;
+   }
+  }
+ }
+ for(const c of pickups){if(c.got)continue;
+   const cx=px+pw/2,cy=pTop+ph/2,dd=Math.hypot(c.x-cx,c.y-cy);
+   if(player.magnet>0&&dd<220){c.x+=(cx-c.x)*Math.min(1,dt*5);c.y+=(cy-c.y)*Math.min(1,dt*5)}
+   if(dd<29||(player.magnet>0&&dd<36)){c.got=true;coins++;coinsEl.textContent=coins;burst(c.x,c.y,'#ffd34e',5);beep(760,.055)}
+ }
+ for(const p of powerups){if(p.got)continue;if(Math.hypot(p.x-(px+pw/2),p.y-(pTop+ph/2))<35){p.got=true;if(p.kind==='magnet'){player.magnet=7;powerStatus.textContent='🧲 COIN MAGNET · 7s';beep(820,.15)}else{player.shield=7;powerStatus.textContent='🛡 SHIELD · 7s';beep(650,.16)}burst(p.x,p.y,p.kind==='magnet'?'#ff4d9d':'#54f1e8',16)}}
+ obstacles=obstacles.filter(o=>o.x>-90);pickups=pickups.filter(c=>c.x>-40&&!c.got);powerups=powerups.filter(p=>p.x>-40&&!p.got);
+ for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=150*dt;p.life-=dt}particles=particles.filter(p=>p.life>0);
+ if(player.shield<=0&&player.magnet<=0)powerStatus.textContent='✨ Power-ups: none';
+ else if(player.shield>0&&player.magnet>0)powerStatus.textContent=`🛡 ${Math.ceil(player.shield)}s  🧲 ${Math.ceil(player.magnet)}s`;
+ else if(player.shield>0)powerStatus.textContent=`🛡 SHIELD · ${Math.ceil(player.shield)}s`;
+ else powerStatus.textContent=`🧲 MAGNET · ${Math.ceil(player.magnet)}s`;
+ distEl.textContent=Math.floor(distance)
+}
+function rr(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function background(){
+ if(activeBackground!=='festival'){
+  const village=activeBackground==='village';
+  const g2=ctx.createLinearGradient(0,0,0,H);
+  if(village){g2.addColorStop(0,'#65c9ed');g2.addColorStop(.55,'#ffd47b');g2.addColorStop(1,'#ee985c')}else{g2.addColorStop(0,'#20144f');g2.addColorStop(.55,'#75458d');g2.addColorStop(1,'#f7a16c')}
+  ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+  // Sun and distant hills
+  ctx.fillStyle=village?'#fff2a8':'#ffd66a';ctx.beginPath();ctx.arc(village?350:80,105,34,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=village?'#58a86b':'#3c275e';ctx.beginPath();ctx.moveTo(0,410);ctx.quadraticCurveTo(90,330,180,405);ctx.quadraticCurveTo(300,315,450,400);ctx.lineTo(450,560);ctx.lineTo(0,560);ctx.fill();
+  if(village){
+   // Palm trees and colourful village houses
+   for(let i=0;i<5;i++){const x=i*112-((time*22)%112);ctx.fillStyle='#795036';ctx.fillRect(x+20,340,10,150);ctx.strokeStyle='#287d49';ctx.lineWidth=8;for(let a=-2;a<=2;a++){ctx.beginPath();ctx.moveTo(x+25,350);ctx.quadraticCurveTo(x+25+a*16,315-Math.abs(a)*3,x+25+a*26,335+Math.abs(a)*4);ctx.stroke()}}
+   for(let i=0;i<5;i++){const x=i*105-((time*38)%105);ctx.fillStyle=i%2?'#e76f51':'#e9b44c';ctx.fillRect(x,440,80,120);ctx.fillStyle='#7c3f58';ctx.beginPath();ctx.moveTo(x-8,442);ctx.lineTo(x+40,405);ctx.lineTo(x+88,442);ctx.fill();ctx.fillStyle='#55344a';ctx.fillRect(x+31,493,20,67);ctx.fillStyle='#ffe9a8';ctx.fillRect(x+9,461,15,19);ctx.fillRect(x+57,461,15,19)}
+  }else{
+   // Tall temple gopuram with tiered, colourful architecture
+   ctx.fillStyle='#55306e';ctx.fillRect(280,385,112,175);ctx.beginPath();ctx.moveTo(268,390);ctx.lineTo(300,350);ctx.lineTo(310,310);ctx.lineTo(330,275);ctx.lineTo(350,245);ctx.lineTo(370,275);ctx.lineTo(390,310);ctx.lineTo(402,350);ctx.lineTo(414,390);ctx.fill();
+   for(let i=0;i<5;i++){const y=300+i*18;ctx.fillStyle=['#ffcf57','#ff7f75','#54e4c9','#ff9f43'][i%4];ctx.fillRect(312-i*5,y,75+i*10,7)}
+   for(let i=0;i<6;i++){ctx.fillStyle='#ffc85b';ctx.fillRect(290+i*17,430,8,18);ctx.fillStyle='#ff4d9d';ctx.fillRect(290+i*17,470,8,18)}
+  }
+  // Road and moving lane markings
+  ctx.fillStyle='#30223e';ctx.fillRect(0,groundY+7,W,H-groundY);ctx.fillStyle='#f6b45c';ctx.fillRect(0,groundY+5,W,6);
+  for(let i=0;i<9;i++){const x=i*70-((time*speed*.8)%70);ctx.fillStyle='#f6c06a';ctx.fillRect(x,groundY+95,34,5)}
+  return;
+ }
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#20144f');g.addColorStop(.48,'#75316e');g.addColorStop(1,'#f58a64');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // stars and moon
+ ctx.fillStyle='#fff0b2';ctx.beginPath();ctx.arc(354,103,31,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff9d8';for(let i=0;i<26;i++){ctx.globalAlpha=.3+(i%3)*.2;ctx.fillRect((i*83+21)%W,(i*47+28)%310,2,2)}ctx.globalAlpha=1;
+ // layered silhouettes
+ ctx.fillStyle='#38204f';ctx.fillRect(0,365,W,180);
+ // temple gopuram
+ ctx.fillStyle='#4d285e';ctx.beginPath();ctx.moveTo(260,380);ctx.lineTo(284,350);ctx.lineTo(300,350);ctx.lineTo(300,324);ctx.lineTo(318,324);ctx.lineTo(318,295);ctx.lineTo(337,270);ctx.lineTo(356,295);ctx.lineTo(356,324);ctx.lineTo(374,324);ctx.lineTo(374,350);ctx.lineTo(391,350);ctx.lineTo(414,380);ctx.fill();
+ for(let y=292;y<365;y+=18){ctx.fillStyle=['#ffcf57','#ff7f75','#54e4c9'][Math.floor(y/18)%3];ctx.fillRect(326,y,61,4)}
+ // colorful bunting
+ for(let i=0;i<10;i++){let x=i*53-((time*32)%53);ctx.strokeStyle='#ffd45a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,163);ctx.lineTo(x+24,185);ctx.stroke();ctx.fillStyle=i%2?'#ff4d9d':'#54f1e8';ctx.beginPath();ctx.moveTo(x+24,185);ctx.lineTo(x+38,174);ctx.lineTo(x+31,198);ctx.fill()}
+ // festival buildings and flower garlands
+ for(let i=0;i<6;i++){let x=i*88-((time*45)%88);rr(x,420,68,140,7,i%2?'#402252':'#4c285e');ctx.fillStyle='#ffc85b';for(let j=0;j<3;j++)ctx.fillRect(x+10+j*18,441,8,14);ctx.fillStyle='#ff4d9d';ctx.fillRect(x+24,496,20,64);ctx.strokeStyle='#ffcf57';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+3,421);ctx.quadraticCurveTo(x+33,455,x+65,421);ctx.stroke()}
+ // lamps
+ for(let i=0;i<5;i++){let x=i*115-((time*62)%115);ctx.strokeStyle='#2b1d45';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x+10,330);ctx.lineTo(x+10,groundY);ctx.stroke();ctx.fillStyle='#ffe77a';ctx.beginPath();ctx.arc(x+10,333,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ff4d9d';ctx.beginPath();ctx.arc(x+10,333,4,0,Math.PI*2);ctx.fill()}
+ // road
+ ctx.fillStyle='#30223e';ctx.fillRect(0,groundY+7,W,H-groundY);ctx.fillStyle='#f6b45c';ctx.fillRect(0,groundY+5,W,6);
+ for(let i=0;i<9;i++){let x=i*70-((time*speed*.8)%70);ctx.fillStyle='#f6c06a';ctx.fillRect(x,groundY+95,34,5)}
+}
+function drawHero(){
+ const p=player;
+ const duck=p.ducking;
+ const run=Math.sin(p.run);
+ const bob=p.onGround&&!duck?Math.abs(run)*3:0;
+ const palette=selectedSkin==='black'
+  ? {shirt:'#30223e',veshti:'#f4f4f4',trim:'#54f1e8',band:'#54f1e8',accent:'#ff4d9d'}
+  : selectedSkin==='festival'
+  ? {shirt:'#ff4d68',veshti:'#fff0cf',trim:'#ffd34e',band:'#ff4d9d',accent:'#54f1e8'}
+  : selectedSkin==='royal'
+  ? {shirt:'#6427b8',veshti:'#ffe36a',trim:'#54f1e8',band:'#ffd34e',accent:'#ff4d9d'}
+  : {shirt:'#f7f2ff',veshti:'#fff8e8',trim:'#e7b94d',band:'#ffd34e',accent:'#d84b43'};
+
+ ctx.save();
+ ctx.translate(p.x,p.y+bob);
+
+ ctx.fillStyle='#160f2a66';
+ ctx.beginPath();
+ ctx.ellipse(23,7,29,7,0,0,Math.PI*2);
+ ctx.fill();
+
+ if(p.shield>0){
+  ctx.strokeStyle='#54f1e8';
+  ctx.lineWidth=3;
+  ctx.globalAlpha=.55+Math.sin(time*10)*.2;
+  ctx.beginPath();
+  ctx.ellipse(23,-35,36,48,0,0,Math.PI*2);
+  ctx.stroke();
+  ctx.globalAlpha=1;
+ }
+
+ if(duck){
+  // Compact crouch pose: lower the whole silhouette to fit under banners.
+  ctx.save();
+  ctx.scale(1,.65);
+  ctx.strokeStyle='#b97a54';
+  ctx.lineWidth=7;
+  ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(14,-15);ctx.lineTo(7,-5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(30,-15);ctx.lineTo(39,-5);ctx.stroke();
+
+  ctx.fillStyle=palette.veshti;
+  ctx.beginPath();
+  ctx.moveTo(9,-20);ctx.lineTo(40,-20);ctx.lineTo(38,-5);ctx.lineTo(12,-5);
+  ctx.closePath();ctx.fill();
+  ctx.fillStyle=palette.trim;ctx.fillRect(11,-8,26,3);
+
+  rr(9,-36,32,22,7,palette.shirt);
+  rr(9,-19,32,4,2,palette.trim);
+
+  ctx.strokeStyle='#b97a54';ctx.lineWidth=6;
+  ctx.beginPath();ctx.moveTo(12,-30);ctx.lineTo(3,-17);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(37,-30);ctx.lineTo(44,-18);ctx.stroke();
+
+  ctx.fillStyle='#bd7854';
+  ctx.beginPath();ctx.arc(25,-43,12,0,Math.PI*2);ctx.fill();
+
+  ctx.fillStyle='#21152a';
+  ctx.beginPath();ctx.arc(24,-47,12,Math.PI,Math.PI*2);
+  ctx.lineTo(36,-42);ctx.lineTo(13,-42);ctx.fill();
+
+  ctx.fillStyle=palette.band;ctx.fillRect(13,-54,23,4);
+  ctx.fillStyle=palette.accent;ctx.fillRect(21,-54,6,4);
+
+  ctx.restore(); // crouch scale
+  ctx.restore(); // main hero transform
+  return;
+ }
+
+ // Running legs and sandals
+ ctx.strokeStyle='#b97a54';ctx.lineWidth=7;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(17,-26);ctx.lineTo(15+run*8,-6);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(30,-26);ctx.lineTo(31-run*8,-6);ctx.stroke();
+ rr(4+run*8,-8,18,7,3,'#34213c');
+ rr(24-run*8,-8,18,7,3,'#34213c');
+
+ // Traditional white veshti with gold border
+ ctx.fillStyle=palette.veshti;
+ ctx.beginPath();
+ ctx.moveTo(9,-36);ctx.lineTo(37,-36);ctx.lineTo(40,-9);
+ ctx.lineTo(24,-9);ctx.lineTo(22,-27);ctx.lineTo(19,-9);
+ ctx.lineTo(6,-9);ctx.closePath();ctx.fill();
+ ctx.fillStyle=palette.trim;ctx.fillRect(7,-12,32,3);ctx.fillRect(22,-34,3,24);
+
+ // Arms swing while running
+ ctx.strokeStyle='#b97a54';ctx.lineWidth=7;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(11,-44);ctx.lineTo(3+run*6,-28);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(36,-44);ctx.lineTo(43-run*6,-30);ctx.stroke();
+
+ rr(9,-53,29,25,7,palette.shirt);
+ ctx.fillStyle=palette.trim;ctx.fillRect(9,-33,29,3);
+
+ ctx.fillStyle='#e9dff8';
+ ctx.beginPath();ctx.moveTo(19,-52);ctx.lineTo(23,-45);ctx.lineTo(28,-52);ctx.fill();
+
+ ctx.fillStyle='#bd7854';
+ ctx.beginPath();ctx.arc(24,-64,14,0,Math.PI*2);ctx.fill();
+
+ ctx.fillStyle='#21152a';
+ ctx.beginPath();ctx.arc(23,-69,14,Math.PI,Math.PI*2);
+ ctx.lineTo(37,-62);ctx.lineTo(30,-64);ctx.lineTo(13,-63);ctx.fill();
+
+ ctx.fillStyle=palette.band;ctx.fillRect(11,-76,25,4);
+ ctx.fillStyle=palette.accent;ctx.fillRect(20,-76,7,4);
+ ctx.fillStyle='#20152a';ctx.beginPath();ctx.arc(29,-64,2,0,Math.PI*2);ctx.fill();
+
+ ctx.fillStyle='#ff4d9d';
+ ctx.beginPath();ctx.moveTo(12,-75);ctx.lineTo(3,-70+run*3);ctx.lineTo(11,-67);ctx.fill();
+
+ ctx.restore();
+}
+function drawObstacle(o){
+ if(o.kind==='banner'){
+  const sway=Math.sin(time*5+o.x*.025)*3;
+  ctx.save();
+  ctx.translate(o.x+o.w/2,o.y-100);
+  ctx.rotate(sway*.008);
+  rr(-o.w/2-5,0,o.w+10,9,4,'#ffd34e');
+  for(let i=0;i<4;i++){
+   const x=-o.w/2+6+i*17;
+   ctx.fillStyle=i%2===0?'#ff4d9d':'#54f1e8';
+   ctx.beginPath();
+   ctx.moveTo(x,9);
+   ctx.lineTo(x+10,9);
+   ctx.lineTo(x+5,60+Math.sin(time*7+i)*3);
+   ctx.closePath();
+   ctx.fill();
+  }
+  ctx.restore();
+ }else if(o.kind==='barrier'){
+  const pulse=1+Math.sin(time*8+o.x*.03)*.025;
+  ctx.save();ctx.translate(o.x+o.w/2,o.y);ctx.scale(pulse,1);
+  rr(-o.w/2,-36,o.w,40,7,'#ff4d68');
+  rr(-o.w/2-4,-42,o.w+8,12,5,'#ffd34e');
+  ctx.fillStyle='#ffe8a3';
+  ctx.fillRect(-o.w/2+8,-29,7,27);
+  ctx.fillRect(-o.w/2+29,-29,7,27);
+  rr(-o.w/2+3,-3,o.w-6,9,3,'#4c285e');
+  ctx.restore();
+ }else{
+  const bounce=Math.sin(time*9+o.x*.025)*2;
+  ctx.save();ctx.translate(o.x+o.w/2,o.y+bounce);
+  rr(-o.w/2,-31,o.w,33,8,'#ff873d');
+  rr(-o.w/2-2,-37,o.w+4,10,5,'#ffd34e');
+  ctx.fillStyle='#c74c47';
+  ctx.fillRect(-o.w/2+8,-24,5,22);
+  ctx.fillRect(-o.w/2+30,-24,5,22);
+  ctx.strokeStyle='#fff0b2';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(-o.w/2+3,-29);ctx.lineTo(o.w/2-3,-29);ctx.stroke();
+  ctx.restore();
+ }
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);background();
+ for(const c of pickups){ctx.save();ctx.translate(c.x,c.y);ctx.rotate(time*3);ctx.fillStyle='#ffd34e';ctx.beginPath();ctx.arc(0,0,c.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff4ad';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#a85b34';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('₹',0,1);ctx.restore()}
+ for(const p of powerups){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.sin(p.spin)*.12);ctx.fillStyle=p.kind==='magnet'?'#ff4d9d':'#54f1e8';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=16;ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#211336';ctx.fillText(p.kind==='magnet'?'M':'S',0,1);ctx.restore()}
+ for(const o of obstacles)drawObstacle(o);drawHero();
+ for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/.7);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size)}ctx.globalAlpha=1;
+ if(state==='playing'){ctx.fillStyle='#fff';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText(`${difficultySettings[difficulty].label.toUpperCase()} · ${backgroundNames[activeBackground].toUpperCase()} · KEEP THE KUTHU GOING!`,W/2,45)}
+}
+function loop(now){let dt=Math.min((now-last)/1000||0,.035);last=now;if(state==='playing')update(dt);else if(state==='menu'||state==='over')time+=dt*.25;draw();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
