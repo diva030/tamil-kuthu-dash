@@ -153,7 +153,7 @@ async function submitOnlineScore(score) {
 
 playerNameEl.value=localStorage.getItem('tkd_player_name')||'';
 refreshBoardBtn.addEventListener('click',loadOnlineLeaderboard);
-submitScoreBtn.addEventListener('click',()=>submitOnlineScore(Math.max(lastRunScore,best)));
+submitScoreBtn.addEventListener('click',()=>submitOnlineScore(lastRunScore));
 
 const controls=document.querySelector('#touchControls'),pauseBtn=document.querySelector('#pause'),musicBtn=document.querySelector('#musicToggle');
 let W=450,H=800,dpr=1,state='menu',last=0,time=0,distance=0,coins=0,speed=290,obstacles=[],pickups=[],powerups=[],particles=[],spawn=0,coinSpawn=0,powerSpawn=7,difficulty=localStorage.getItem('tkd_difficulty')||'medium',selectedBackground=localStorage.getItem('tkd_background')||'festival',activeBackground='festival',sceneCycleTimer=0;
