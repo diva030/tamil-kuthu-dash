@@ -79,8 +79,8 @@ const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),wrap=do
 const overlay=document.querySelector('#overlay'),startBtn=document.querySelector('#start'),subtitle=document.querySelector('#subtitle');
 const coinsEl=document.querySelector('#coins'),distEl=document.querySelector('#distance'),bestEl=document.querySelector('#best'),powerStatus=document.querySelector('#powerStatus');
 // Configure these two values after creating your Supabase project. The anon/publishable key is designed for browser use with RLS enabled.
-const SUPABASE_URL='YOUR_SUPABASE_PROJECT_URL';
-const SUPABASE_ANON_KEY='YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY';
+const SUPABASE_URL='https://rniiwxiwgknabtpoorsh.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_8VrtpKQ9kn4u2A312cGE6g_eK6icH4c';
 const playerNameEl=document.querySelector('#playerName'),submitScoreBtn=document.querySelector('#submitScore'),refreshBoardBtn=document.querySelector('#refreshBoard'),leaderboardStatus=document.querySelector('#leaderboardStatus'),leaderboardList=document.querySelector('#leaderboardList');
 let lastRunScore=0;
 function leaderboardConfigured(){return /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co$/.test(SUPABASE_URL)&&!SUPABASE_ANON_KEY.startsWith('YOUR_')&&SUPABASE_ANON_KEY.length>20;}
